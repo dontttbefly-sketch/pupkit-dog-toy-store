@@ -359,7 +359,7 @@ function initCart() {
     </div>
     <div class="cart-items" data-cart-items></div>
     <div class="cart-total"><span>小计</span><strong data-cart-total>$0</strong></div>
-    <button class="button primary" type="button">回到货架</button>
+    <button class="button primary" type="button" data-checkout-disabled>前去支付</button>
   `;
   document.body.append(overlay, drawer);
 
@@ -367,6 +367,9 @@ function initCart() {
     const openButton = event.target.closest("[data-cart-open]");
     const closeButton = event.target.closest("[data-cart-close]");
     const addButton = event.target.closest("[data-add-cart]");
+    const decreaseButton = event.target.closest("[data-cart-decrease]");
+    const removeButton = event.target.closest("[data-cart-remove]");
+    const checkoutButton = event.target.closest("[data-checkout-disabled]");
 
     if (openButton) openCart();
     if (closeButton || event.target === overlay) closeCart();
@@ -375,6 +378,9 @@ function initCart() {
       flyToCart(getProductVisual(addButton));
       showToast("进入玩具袋");
     }
+    if (decreaseButton) decreaseCartItem(decreaseButton.dataset.cartDecrease);
+    if (removeButton) removeCartItem(removeButton.dataset.cartRemove);
+    if (checkoutButton) showToast("支付功能未接入");
   });
 
   renderCart();
@@ -398,6 +404,19 @@ function addToCart(id) {
   } else {
     state.cart.push(id);
   }
+  renderCart();
+}
+
+function decreaseCartItem(id) {
+  const index = state.cart.indexOf(id);
+  if (index === -1) return;
+
+  state.cart.splice(index, 1);
+  renderCart();
+}
+
+function removeCartItem(id) {
+  state.cart = state.cart.filter((item) => item !== id);
   renderCart();
 }
 
@@ -428,11 +447,15 @@ function renderCart() {
     sum += product.price * qty;
     return `
       <div class="cart-item">
-        <div>
+        <div class="cart-line-copy">
           <strong>${product.name}</strong>
-        <span>数量 ${qty}</span>
+          <span>数量 ${qty}</span>
         </div>
-        <strong>$${product.price * qty}</strong>
+        <div class="cart-line-actions">
+          <strong>$${product.price * qty}</strong>
+          <button class="cart-small-action" type="button" data-cart-decrease="${product.id}" aria-label="减少 ${product.name} 数量">-</button>
+          <button class="cart-small-action remove" type="button" data-cart-remove="${product.id}" aria-label="移除 ${product.name}">移除</button>
+        </div>
       </div>
     `;
   }).join("");
